@@ -1,0 +1,47 @@
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: feature-manager
+  app: feature-manager-api
+  namespace: feature-management
+spec:
+  replicas: 3
+  template:
+    metadata:
+      annotations:
+      labels:
+        app: feature-manager-api
+    spec:
+      containers:
+      - name: feature-manager
+        image: registry.services.dmao.org/dmaonline/feature-manager
+        resources:
+          limits:
+            cpu: 300m
+            memory: 100Mi
+          requests:
+            cpu: 100m
+            memory: 50Mi
+        env:
+        - name: MYSQL_CONNECTION_STRING
+          valueFrom:
+            secretKeyRef:
+              name: feature-manager-api-v001
+              key: mysql_connection_string
+        ports:
+        - name: http
+          containerPort: 3000
+        livenessProbe:
+          httpGet:
+            path: /health_checks/check_alive
+            port: 3000
+          initialDelaySeconds: 30
+          periodSeconds: 3
+        readinessProbe:
+          httpGet:
+            path: /health_checks/check_ready
+            port: 3000
+          initialDelaySeconds: 30
+          periodSeconds: 3
+      restartPolicy: Always
